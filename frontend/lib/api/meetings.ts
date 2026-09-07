@@ -13,6 +13,8 @@ import {
   ActionItemCreateInput,
   ActionItemUpdateInput,
   SummaryCreateInput,
+  TranscriptComment,
+  TranscriptCommentCreateInput,
 } from '@/types';
 
 export async function getMeetings(params: MeetingQueryParams = {}): Promise<MeetingListResponse> {
@@ -80,4 +82,21 @@ export async function deleteActionItem(id: string, aid: string): Promise<void> {
 
 export async function getTags(): Promise<Tag[]> {
   return get<Tag[]>('/api/tags');
+}
+
+export async function getComments(id: string): Promise<TranscriptComment[]> {
+  return get<TranscriptComment[]>(`/api/meetings/${encodeURIComponent(id)}/comments`);
+}
+
+export async function createComment(
+  id: string,
+  data: TranscriptCommentCreateInput
+): Promise<TranscriptComment> {
+  return post<TranscriptComment>(`/api/meetings/${encodeURIComponent(id)}/comments`, data);
+}
+
+export async function deleteComment(id: string, commentId: string): Promise<void> {
+  return del<void>(
+    `/api/meetings/${encodeURIComponent(id)}/comments/${encodeURIComponent(commentId)}`
+  );
 }

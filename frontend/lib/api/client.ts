@@ -6,18 +6,37 @@ export class ApiError extends Error {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const ACCESS_TOKEN_KEY = 'firefiles.access_token';
+
+export function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function setAccessToken(token: string): void {
+  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function clearAccessToken(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.dispatchEvent(new Event('firefiles:unauthorized'));
+}
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
   
+  const token = getAccessToken();
   const headers = {
     'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
   const response = await fetch(url, { ...options, headers });
   
   if (!response.ok) {
+    if (response.status === 401) clearAccessToken();
     throw new ApiError(response.status, `API Error: ${response.statusText}`);
   }
   

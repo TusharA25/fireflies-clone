@@ -45,11 +45,11 @@ class SummaryOut(SummaryBase):
     
     @field_validator('key_topics', mode='before')
     @classmethod
-    def parse_key_topics(cls, v):
+    def parse_key_topics(cls, v: Any) -> List[str]:
         if isinstance(v, str):
             try:
                 return json.loads(v)
-            except:
+            except Exception:
                 return []
         return v
         
@@ -96,8 +96,12 @@ class MeetingBase(BaseModel):
     status: MeetingStatus = MeetingStatus.done
     owner_id: Optional[str] = None
 
-class MeetingCreate(MeetingBase):
-    pass
+class MeetingCreate(BaseModel):
+    title: str
+    date: datetime
+    duration_sec: Optional[int] = None
+    audio_url: Optional[str] = None
+    status: MeetingStatus = MeetingStatus.done
 
 class MeetingUpdate(BaseModel):
     title: Optional[str] = None
@@ -126,3 +130,74 @@ class MeetingListResponse(BaseModel):
     page: int
     size: int
     pages: int
+
+# --- HIGHLIGHT SCHEMAS ---
+class HighlightCreate(BaseModel):
+    segment_id: str
+
+class HighlightOut(BaseModel):
+    id: str
+    meeting_id: str
+    segment_id: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- COMMENT SCHEMAS ---
+class CommentCreate(BaseModel):
+    segment_id: str
+    text: str
+    author_name: Optional[str] = None
+
+class CommentOut(BaseModel):
+    id: str
+    meeting_id: str
+    segment_id: str
+    text: str
+    author_name: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- GLOBAL SEARCH SCHEMAS ---
+class TranscriptSearchHit(BaseModel):
+    meeting_id: str
+    meeting_title: str
+    meeting_date: datetime
+    segment_id: str
+    start_ms: int
+    snippet: str
+    participant_name: Optional[str] = None
+
+class GlobalSearchResponse(BaseModel):
+    query: str
+    total: int
+    page: int
+    size: int
+    pages: int
+    meeting_hits: List[MeetingOut]       # meetings whose title matched
+    transcript_hits: List[TranscriptSearchHit]  # transcript segments that matched
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    display_name: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UserOut(BaseModel):
+    id: str
+    email: str
+    display_name: str
+    avatar_url: Optional[str] = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut

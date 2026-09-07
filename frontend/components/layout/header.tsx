@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { MenuIcon, PlusIcon, ArrowPathIcon } from '../ui/icons';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface HeaderProps {
   onOpenSidebar: () => void;
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   isRefreshing = false,
 }) => {
+  const { user, logout } = useAuth();
   return (
     <header className="h-16 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
       {/* Left side */}
@@ -26,6 +28,15 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label="Open navigation menu"
         >
           <MenuIcon className="w-5 h-5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="hidden sm:inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-colors"
+          aria-label={`Sign out ${user?.display_name ?? ''}`}
+        >
+          Sign out
         </button>
 
         <div className="flex items-center gap-2 text-sm text-zinc-400">

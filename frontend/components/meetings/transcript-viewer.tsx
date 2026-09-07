@@ -1,17 +1,25 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { TranscriptSegment as SegmentType, Participant } from '@/types';
+import { TranscriptSegment as SegmentType, Participant, TranscriptComment } from '@/types';
 import { TranscriptSearch } from './transcript-search';
 import { TranscriptSegmentItem } from './transcript-segment';
 import { DocumentTextIcon, ArrowPathIcon } from '../ui/icons';
+import { createComment, deleteComment } from '@/lib/api/meetings';
+import { useToast } from '@/components/ui/toast';
 
 interface TranscriptViewerProps {
+  meetingId: string;
   segments: SegmentType[];
   participants: Participant[];
   currentTime: number; // in seconds
   onSeek: (seconds: number) => void;
   isLoading?: boolean;
+  comments: TranscriptComment[];
+  commentsLoading?: boolean;
+  commentsError?: string | null;
+  onCommentsChange: React.Dispatch<React.SetStateAction<TranscriptComment[]>>;
+  onRetryComments: () => void;
 }
 
 interface SearchMatch {
@@ -20,15 +28,25 @@ interface SearchMatch {
 }
 
 export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
+  meetingId,
   segments = [],
   participants = [],
   currentTime,
   onSeek,
   isLoading = false,
+  comments,
+  commentsLoading = false,
+  commentsError = null,
+  onCommentsChange,
+  onRetryComments,
 }) => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [composerSegmentId, setComposerSegmentId] = useState<string | null>(null);
+  const [submittingSegmentId, setSubmittingSegmentId] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Map participant_id -> participant name
@@ -131,6 +149,48 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
     onSeek(startSeconds);
   };
 
+  const commentsBySegment = useMemo(() => {
+    const map = new Map<string, TranscriptComment[]>();
+    comments.forEach((comment) => {
+      const list = map.get(comment.segment_id) ?? [];
+      list.push(comment);
+      map.set(comment.segment_id, list);
+    });
+    return map;
+  }, [comments]);
+
+  const handleSubmitComment = async (segmentId: string, text: string, authorName: string) => {
+    setSubmittingSegmentId(segmentId);
+    try {
+      const created = await createComment(meetingId, {
+        segment_id: segmentId,
+        text,
+        author_name: authorName || null,
+      });
+      onCommentsChange((current) => [...current, created]);
+      setComposerSegmentId(null);
+      showToast('Comment added', 'success');
+    } catch {
+      showToast('Failed to add comment', 'error');
+      throw new Error('Failed to add comment');
+    } finally {
+      setSubmittingSegmentId(null);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    setDeletingCommentId(commentId);
+    try {
+      await deleteComment(meetingId, commentId);
+      onCommentsChange((current) => current.filter((c) => c.id !== commentId));
+      showToast('Comment deleted', 'success');
+    } catch {
+      showToast('Failed to delete comment', 'error');
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const activeMatchedSegmentId = searchMatches[currentMatchIndex]?.segmentId;
 
   return (
@@ -146,6 +206,18 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
             <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-400 font-mono font-medium">
               {segments.length} segments
             </span>
+            {commentsLoading ? (
+              <span className="text-[11px] text-zinc-500">Loading comments…</span>
+            ) : commentsError ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-400" role="alert">
+                {commentsError}
+                <button type="button" onClick={onRetryComments} className="font-semibold underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded">Retry</button>
+              </span>
+            ) : (
+              <span className="text-[11px] text-zinc-500">
+                {comments.length} comment{comments.length === 1 ? '' : 's'}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -210,6 +282,16 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
                 onSeekToSegment={handleSeekToSegment}
                 searchQuery={searchQuery}
                 isCurrentMatchSegment={isCurrentMatch}
+                comments={commentsBySegment.get(segment.id) ?? []}
+                isComposerOpen={composerSegmentId === segment.id}
+                isSubmittingComment={submittingSegmentId === segment.id}
+                deletingCommentId={deletingCommentId}
+                onOpenComposer={() => setComposerSegmentId(segment.id)}
+                onCloseComposer={() => setComposerSegmentId(null)}
+                onSubmitComment={(text, authorName) =>
+                  handleSubmitComment(segment.id, text, authorName)
+                }
+                onDeleteComment={handleDeleteComment}
               />
             );
           })

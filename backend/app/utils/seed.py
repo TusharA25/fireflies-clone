@@ -1,11 +1,16 @@
 import datetime
 from sqlalchemy.orm import Session
+from app.config import settings
 from app.database import SessionLocal, init_db
 from app.models.models import (
     Meeting, Participant, TranscriptSegment, Summary, ActionItem, Chapter, Tag, User, MeetingStatus
 )
 
 def seed_db():
+    if settings.environment == "production":
+        raise RuntimeError("Seed data is disabled in production")
+    if not settings.seed_user_email or not settings.seed_user_password:
+        raise RuntimeError("Set SEED_USER_EMAIL and SEED_USER_PASSWORD before seeding development data")
     init_db()
     db: Session = SessionLocal()
     
@@ -15,7 +20,12 @@ def seed_db():
         return
 
     # User
-    user = User(email="test@firefiles.com", display_name="Test User")
+    from app.security import hash_password
+    user = User(
+        email=settings.seed_user_email.strip().lower(),
+        display_name="Test User",
+        password_hash=hash_password(settings.seed_user_password),
+    )
     db.add(user)
     db.commit()
 

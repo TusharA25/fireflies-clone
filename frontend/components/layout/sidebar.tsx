@@ -14,6 +14,7 @@ import {
   XMarkIcon,
   SparklesIcon,
 } from '../ui/icons';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   totalMeetings = 0,
   apiConnected = true,
 }) => {
+  const { user, logout } = useAuth();
   const navItems = [
     {
       name: 'Meetings Library',
@@ -204,14 +206,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                AJ
+                {(user?.display_name || 'U').split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-zinc-200 truncate">Alex Johnson</p>
-                <p className="text-[11px] text-zinc-400 truncate">alex@firefiles.ai</p>
+                <p className="text-xs font-semibold text-zinc-200 truncate">{user?.display_name}</p>
+                <p className="text-[11px] text-zinc-400 truncate">{user?.email}</p>
               </div>
             </div>
           </div>
+          <button type="button" onClick={logout} className="sm:hidden w-full px-3 py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 text-left">Sign out</button>
         </div>
       </aside>
     </>

@@ -14,6 +14,7 @@ import { MeetingErrorState } from '@/components/meetings/error-state';
 import { CreateMeetingModal } from '@/components/meetings/create-meeting-modal';
 import { useToast } from '@/components/ui/toast';
 import { SparklesIcon, ClockIcon, UsersIcon, FolderIcon, PlusIcon } from '@/components/ui/icons';
+import { RequireAuth } from '@/components/auth/require-auth';
 
 export default function DashboardPage() {
   const { showToast } = useToast();
@@ -174,7 +175,7 @@ export default function DashboardPage() {
     };
   }, [meetings]);
 
-  return (
+  return <RequireAuth>
     <div className="min-h-screen bg-zinc-950 flex flex-col lg:flex-row text-zinc-100 antialiased">
       {/* Sidebar */}
       <Sidebar
@@ -319,5 +320,5 @@ export default function DashboardPage() {
         }}
       />
     </div>
-  );
+  </RequireAuth>;
 }

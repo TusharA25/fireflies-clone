@@ -7,6 +7,20 @@ export interface HealthResponse {
   status: string;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  display_name: string;
+  avatar_url?: string | null;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: 'bearer';
+  user: User;
+}
+
 export type MeetingStatus = 'pending' | 'processing' | 'done';
 
 export interface Tag {
@@ -58,6 +72,21 @@ export interface Chapter {
   start_ms: number;
   end_ms?: number | null;
   sequence: number;
+}
+
+export interface TranscriptComment {
+  id: string;
+  meeting_id: string;
+  segment_id: string;
+  text: string;
+  author_name?: string | null;
+  created_at: string;
+}
+
+export interface TranscriptCommentCreateInput {
+  segment_id: string;
+  text: string;
+  author_name?: string | null;
 }
 
 export interface Meeting {

@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Milestone: 5 — AI Summary + Action Items + Meeting Intelligence
+## Current Milestone: 7 — Final Production Polish + Integration
 **Status: COMPLETE**  
 **Date: 2026-09-07**
 
@@ -98,14 +98,19 @@
 
 ---
 
-## Next Milestone: 6 — Polish, Export & Deployment
+### Milestone 6 and 7 additions
+
+- [x] Persisted transcript comments with validation, deletion, retry, and keyboard cancellation
+- [x] JWT registration/login/me endpoints, PBKDF2 password hashing, protected API routes, and ownership checks for user-owned meetings
+- [x] Frontend login/register screens, protected workspace routes, token persistence, invalid-token handling, and logout
+- [x] Integration regression coverage for authentication, meeting ownership, comments, summaries, action items, chapters, and transcripts
+
+## Intentionally Unimplemented
 
 ### Planned Work
 1. Meeting notes export (Markdown, PDF)
-2. Dark/light theme toggle
-3. Improved mobile responsiveness
-4. Production deployment (Docker, Nginx, or cloud hosting)
-5. Authentication scaffold
+2. Real audio ingestion/streaming and real LLM summary generation
+3. Calendar integrations and deployment infrastructure
 
 ---
 
@@ -143,12 +148,11 @@ npm run dev
 | Meetings list API        | `curl http://localhost:8000/api/meetings`                     | 200 OK + items    |
 | GET summary endpoint     | `curl http://localhost:8000/api/meetings/{id}/summary`        | 200 OK            |
 | GET action-items endpoint| `curl http://localhost:8000/api/meetings/{id}/action-items`   | 200 OK + array    |
-| Backend tests            | `cd backend && venv/bin/pytest tests/ -v`                     | 12 passed ✓       |
+| Backend tests            | `cd backend && venv/bin/pytest tests/ -v`                     | 14 passed ✓       |
 
 ---
 
 ## Known Limitations
 
 - Audio player uses simulated clock playback (no real audio file streaming) — real audio URL streaming when `audio_url` is present.
-- Authentication and external calendar integrations are out of scope for current milestones.
 - LLM integration (real AI summaries) is out of scope; summaries are seeded mock data.

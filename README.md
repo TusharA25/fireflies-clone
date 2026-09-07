@@ -2,7 +2,7 @@
 
 **Meeting Notes & Transcription Platform** — a Fireflies.ai-style application for recording, transcribing, and summarizing meetings.
 
-> **Current Status:** Milestone 4 — Meeting Detail + Interactive Transcript + Media Player complete. See [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
+> **Current Status:** Milestone 7 — production polish and authentication integration. See [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
 ---
 
@@ -26,6 +26,8 @@ npm install
 npm run dev
 ```
 - App: http://localhost:3000
+
+Register an account at `/register`, then sign in at `/login`. To seed development data, set `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` in your untracked `backend/.env` before running the seed script.
 
 ---
 
@@ -104,6 +106,8 @@ firefiles/
 - [x] Case-insensitive transcript search with real-time match highlighting
 - [x] Search match navigation (next/previous) with auto-scroll
 - [x] Chapter / Topic navigation with real-time active indicators
-- [ ] AI summary, key topics, decisions management (Milestone 5)
-- [ ] Action items checklist & CRUD (Milestone 5)
-- [ ] Global search, tags, comments, export (Bonus)
+- [x] AI summary and action-items CRUD
+- [x] JWT registration, login, protected workspace routes, and logout
+- [x] Persisted transcript comments and highlights
+- [x] Global backend search and persisted meeting tags APIs
+- [ ] PDF/Markdown export and real LLM-generated summaries

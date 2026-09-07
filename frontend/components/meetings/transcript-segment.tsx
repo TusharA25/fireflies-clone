@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { TranscriptSegment as SegmentType } from '@/types';
+import { TranscriptComment, TranscriptSegment as SegmentType } from '@/types';
 import { formatTime } from './media-player';
 import { PlayIcon } from '../ui/icons';
+import { TranscriptComments } from './transcript-comments';
 
 interface TranscriptSegmentProps {
   segment: SegmentType;
@@ -12,6 +13,14 @@ interface TranscriptSegmentProps {
   onSeekToSegment: (startSeconds: number) => void;
   searchQuery: string;
   isCurrentMatchSegment: boolean;
+  comments: TranscriptComment[];
+  isComposerOpen: boolean;
+  isSubmittingComment: boolean;
+  deletingCommentId: string | null;
+  onOpenComposer: () => void;
+  onCloseComposer: () => void;
+  onSubmitComment: (text: string, authorName: string) => Promise<void>;
+  onDeleteComment: (commentId: string) => Promise<void>;
 }
 
 const SPEAKER_COLORS = [
@@ -102,6 +111,14 @@ export const TranscriptSegmentItem: React.FC<TranscriptSegmentProps> = ({
   onSeekToSegment,
   searchQuery,
   isCurrentMatchSegment,
+  comments,
+  isComposerOpen,
+  isSubmittingComment,
+  deletingCommentId,
+  onOpenComposer,
+  onCloseComposer,
+  onSubmitComment,
+  onDeleteComment,
 }) => {
   const startSeconds = segment.start_ms / 1000;
   const timeFormatted = formatTime(startSeconds);
@@ -111,25 +128,27 @@ export const TranscriptSegmentItem: React.FC<TranscriptSegmentProps> = ({
   return (
     <div
       id={`transcript-segment-${segment.id}`}
-      onClick={() => onSeekToSegment(startSeconds)}
-      className={`group relative rounded-xl transition-all duration-200 p-3 sm:p-4 cursor-pointer select-text border ${
+      className={`group relative rounded-xl transition-all duration-200 p-3 sm:p-4 select-text border ${
         isActive
           ? 'bg-violet-950/30 border-violet-500/50 shadow-md shadow-violet-500/5 ring-1 ring-violet-500/30'
           : isCurrentMatchSegment
           ? 'bg-amber-950/20 border-amber-500/40'
           : 'bg-zinc-900/40 hover:bg-zinc-900/90 border-zinc-800/60 hover:border-zinc-700/80'
       }`}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSeekToSegment(startSeconds);
-        }
-      }}
-      aria-label={`Transcript segment at ${timeFormatted} by ${speakerName}: ${segment.text}`}
     >
-      <div className="flex items-start gap-3">
+      <div
+        className="flex items-start gap-3 cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={() => onSeekToSegment(startSeconds)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSeekToSegment(startSeconds);
+          }
+        }}
+        aria-label={`Transcript segment at ${timeFormatted} by ${speakerName}: ${segment.text}`}
+      >
         {/* Speaker Avatar / Initials */}
         <div
           className={`w-7 h-7 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0 select-none shadow-sm ${colorClass}`}
@@ -147,11 +166,12 @@ export const TranscriptSegmentItem: React.FC<TranscriptSegmentProps> = ({
             </span>
 
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onSeekToSegment(startSeconds);
               }}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-zinc-400 hover:text-white hover:bg-violet-600/20 hover:border-violet-500/30 border border-zinc-800/80 transition-colors"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-zinc-400 hover:text-white hover:bg-violet-600/20 hover:border-violet-500/30 border border-zinc-800/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
               title="Seek to this point"
               aria-label={`Seek to timestamp ${timeFormatted}`}
             >
@@ -166,6 +186,17 @@ export const TranscriptSegmentItem: React.FC<TranscriptSegmentProps> = ({
           </p>
         </div>
       </div>
+
+      <TranscriptComments
+        comments={comments}
+        isComposerOpen={isComposerOpen}
+        isSubmitting={isSubmittingComment}
+        deletingId={deletingCommentId}
+        onOpenComposer={onOpenComposer}
+        onCloseComposer={onCloseComposer}
+        onSubmit={onSubmitComment}
+        onDelete={onDeleteComment}
+      />
     </div>
   );
 };

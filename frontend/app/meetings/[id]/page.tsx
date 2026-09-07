@@ -9,8 +9,9 @@ import {
   getChapters,
   getSummary,
   getActionItems,
+  getComments,
 } from '@/lib/api/meetings';
-import { MeetingDetail, TranscriptSegment, Chapter, Summary, ActionItem } from '@/types';
+import { MeetingDetail, TranscriptSegment, Chapter, Summary, ActionItem, TranscriptComment } from '@/types';
 import { MeetingHeader } from '@/components/meetings/meeting-header';
 import { MediaPlayer } from '@/components/meetings/media-player';
 import { TranscriptViewer } from '@/components/meetings/transcript-viewer';
@@ -22,6 +23,7 @@ import {
   UsersIcon,
   ChevronLeftIcon,
 } from '@/components/ui/icons';
+import { RequireAuth } from '@/components/auth/require-auth';
 
 export default function MeetingDetailPage() {
   const params = useParams();
@@ -33,6 +35,9 @@ export default function MeetingDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [comments, setComments] = useState<TranscriptComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [intelligenceLoading, setIntelligenceLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +115,24 @@ export default function MeetingDetailPage() {
     loadMeetingData();
   }, [loadMeetingData]);
 
+  const loadComments = useCallback(async () => {
+    if (!id) return;
+    setCommentsLoading(true);
+    setCommentsError(null);
+    try {
+      setComments(await getComments(id));
+    } catch (err) {
+      setComments([]);
+      setCommentsError(err instanceof Error ? err.message : 'Failed to load comments');
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    void loadComments();
+  }, [loadComments]);
+
   // Compute total duration in seconds
   const totalDuration = React.useMemo(() => {
     if (meeting?.duration_sec && meeting.duration_sec > 0) {
@@ -170,7 +193,7 @@ export default function MeetingDetailPage() {
     setIsPlaying(true);
   };
 
-  return (
+  return <RequireAuth>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col antialiased selection:bg-violet-500/30 selection:text-violet-200">
       {/* Loading state */}
       {loading ? (
@@ -238,11 +261,17 @@ export default function MeetingDetailPage() {
                 className="lg:col-span-7 xl:col-span-8 space-y-4"
               >
                 <TranscriptViewer
+                  meetingId={id}
                   segments={segments}
                   participants={meeting.participants || []}
                   currentTime={currentTime}
                   onSeek={handleSeek}
                   isLoading={loading}
+                  comments={comments}
+                  commentsLoading={commentsLoading}
+                  commentsError={commentsError}
+                  onCommentsChange={setComments}
+                  onRetryComments={loadComments}
                 />
               </section>
 
@@ -314,5 +343,5 @@ export default function MeetingDetailPage() {
         </>
       ) : null}
     </div>
-  );
+  </RequireAuth>;
 }

@@ -66,6 +66,16 @@ Frontend is now at: http://localhost:3000
 | `DATABASE_URL`  | `sqlite:///./firefiles.db`      | SQLAlchemy database URL              |
 | `ENVIRONMENT`   | `development`                   | `development` or `production`        |
 | `CORS_ORIGINS`  | `["http://localhost:3000"]`     | JSON array of allowed CORS origins   |
+| `JWT_SECRET`    | development-only fallback         | Required strong secret in production |
+| `JWT_EXPIRE_MINUTES` | `10080`                      | Access-token lifetime in minutes     |
+| `SEED_USER_EMAIL` | unset | Development seed account email; not permitted in production |
+| `SEED_USER_PASSWORD` | unset | Development seed account password; required before seeding |
+
+In production, set `ENVIRONMENT=production`, use explicit CORS origins (never `*`), and provide a strong `JWT_SECRET`. The frontend only receives `NEXT_PUBLIC_*` variables; never place backend secrets in `frontend/.env.local`.
+
+## Authentication
+
+The frontend provides `/register` and `/login`. Authenticated API calls include a bearer token stored in browser local storage; an invalid or expired token is cleared and the workspace redirects to sign-in. The backend protects meeting APIs and returns `401` for missing/invalid credentials. Meetings and all meeting-scoped resources are available only to their owner. Seed data requires explicitly configured development credentials and is disabled in production.
 
 ---
 

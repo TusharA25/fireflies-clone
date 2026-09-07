@@ -3,6 +3,16 @@
 All endpoints are prefixed with `/api`.
 Interactive documentation is available at `http://localhost:8000/docs` (Swagger UI).
 
+## Authentication 🟢 IMPLEMENTED
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register and receive a bearer token (`201`) |
+| POST | `/api/auth/login` | Sign in and receive a bearer token |
+| GET | `/api/auth/me` | Return the authenticated user |
+
+Except for health, register, and login, API endpoints require `Authorization: Bearer <access_token>`. Missing, expired, or invalid tokens return `401`. Meetings and their child resources are accessible only to their owner; cross-user access returns `404`.
+
 ---
 
 ## Health
@@ -34,7 +44,8 @@ Interactive documentation is available at `http://localhost:8000/docs` (Swagger 
 - `q` — full-text search
 - `sort` — `date_desc` (default), `date_asc`, `title_asc`
 - `page` — 1-indexed
-- `limit` — default 20
+- `size` — default 10, maximum 100
+- `participant`, `date_from`, `date_to`, and `tag_id` — additional filters
 
 **POST /api/meetings — Request body:**
 ```json
@@ -51,19 +62,10 @@ Interactive documentation is available at `http://localhost:8000/docs` (Swagger 
   "items": [ { "id": "...", "title": "...", "date": "...", "status": "done" } ],
   "total": 42,
   "page": 1,
-  "limit": 20
+  "size": 10,
+  "pages": 5
 }
 ```
-
----
-
-## Participants 🟢 IMPLEMENTED
-
-| Method | Path                                    | Description             |
-|--------|-----------------------------------------|-------------------------|
-| GET    | /api/meetings/{id}/participants         | List participants        |
-| POST   | /api/meetings/{id}/participants         | Add participant          |
-| DELETE | /api/meetings/{id}/participants/{pid}   | Remove participant       |
 
 ---
 
@@ -72,7 +74,7 @@ Interactive documentation is available at `http://localhost:8000/docs` (Swagger 
 | Method | Path                                      | Description                  |
 |--------|-------------------------------------------|------------------------------|
 | GET    | /api/meetings/{id}/transcript             | Full transcript (all segments)|
-| GET    | /api/meetings/{id}/transcript?q=keyword   | Searched/filtered transcript |
+| POST   | /api/meetings/{id}/transcript             | Create a transcript segment |
 
 **Segment shape:**
 ```json
@@ -140,9 +142,18 @@ Interactive documentation is available at `http://localhost:8000/docs` (Swagger 
 
 | Method | Path         | Description                                |
 |--------|--------------|--------------------------------------------|
-| GET    | /api/search  | Global search across meetings + transcripts |
+| GET    | /api/search?q=...  | Global search across meetings + transcripts |
 
-**Query params:** `q` (required), `type` (`meetings`, `transcripts`, `all`)
+**Query params:** `q` (required), `page`, `size`
+
+---
+
+## Highlights and Comments 🟢 IMPLEMENTED
+
+| Resource | Paths |
+|---|---|
+| Highlights | `GET`, `POST /api/meetings/{id}/highlights`; `DELETE /api/meetings/{id}/highlights/{hid}` |
+| Comments | `GET`, `POST /api/meetings/{id}/comments`; `DELETE /api/meetings/{id}/comments/{comment_id}` |
 
 ---
 
@@ -156,6 +167,8 @@ All error responses use a consistent envelope:
 | Status | Meaning               |
 |--------|-----------------------|
 | 400    | Validation error      |
+| 401    | Missing, invalid, or expired token |
+| 409    | Duplicate registration |
 | 404    | Resource not found    |
 | 422    | Pydantic parse error  |
 | 500    | Internal server error |
