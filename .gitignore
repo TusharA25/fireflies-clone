@@ -1,0 +1,28 @@
+# Node.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.env.local
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+backend/.env
+frontend/.env.local
